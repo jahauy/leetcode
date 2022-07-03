@@ -1,0 +1,134 @@
+/* 
+ * @author: Edison
+ * @date: 2022/7/3
+*/
+#include "public.h"
+
+using namespace std;
+
+class MinStack {
+public:
+    MinStack()
+    {
+        minStack.push(INT32_MAX);
+    }
+
+    void push(int val)
+    {
+        normalStack.push(val);
+//        if (minStack.empty()) {
+//            minStack.push(val);
+//            return;
+//        }
+//        if (val < minStack.top()) {
+//            minStack.push(val);
+//        }
+        minStack.push(min(val, minStack.top()));
+    }
+
+    void pop()
+    {
+//        if (normalStack.empty()) {
+//            normalStack.pop();
+//            return;
+//        }
+//        if (top() == minStack.top()) {
+//            if (!minStack.empty()) {
+//                minStack.pop();
+//            }
+//        }
+        minStack.pop();
+        normalStack.pop();
+    }
+
+    int top()
+    {
+//        if (normalStack.empty()) {
+//            return -1;
+//        }
+        return normalStack.top();
+    }
+
+    int getMin()
+    {
+//        if (minStack.empty()) {
+//            return top();
+//        }
+        return minStack.top();
+    }
+
+private:
+    stack<int> normalStack;
+    stack<int> minStack;
+};
+
+// 测试框架
+// ------------------------------------------------------
+typedef struct {
+    vector<pair<string, int>> ops;
+    vector<int> target;
+} TestCaseItem;
+
+static vector<TestCaseItem> TestCaseSet = {
+        {
+                .ops = {
+                        {"push",   2},
+                        {"push",   0},
+                        {"push",   3},
+                        {"push",   0},
+                        {"getMin", -1},
+                        {"pop",    -1},
+                        {"getMin", -1},
+                        {"pop",    -1},
+                        {"getMin", -1},
+                        {"pop",    -1},
+                        {"getMin", -1},
+                },
+                .target = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2}
+        },
+        {
+                .ops = {
+                        {"push",   0},
+                        {"push",   1},
+                        {"push",   0},
+                        {"getMin", -1},
+                        {"pop",    -1},
+                        {"getMin", -1},
+                },
+                .target = {0, 0, 0, 0, 0, 0, 0}
+        }
+};
+
+void TestMinStack(void)
+{
+    int i = 0;
+    for (auto &testCase: TestCaseSet) {
+        vector<int> ret;
+        auto sol = MinStack();
+        ret.emplace_back(0);
+        for (auto item: testCase.ops) {
+            auto opsValue = item.second;
+            if (item.first == "push") {
+                sol.push(opsValue);
+                ret.emplace_back(0);
+            } else if (item.first == "pop") {
+                sol.pop();
+                ret.emplace_back(0);
+            } else if (item.first == "top") {
+                ret.emplace_back(sol.top());
+            } else if (item.first == "getMin") {
+                ret.emplace_back(sol.getMin());
+            }
+        }
+        for (auto item: ret) {
+            cout << item << ", ";
+        }
+        cout << endl;
+        if (testCase.target == ret) {
+            printf("[OK] %d.\n", i);
+        } else {
+            printf("[FAILED] %d.\n", i);
+        }
+        i++;
+    }
+}
