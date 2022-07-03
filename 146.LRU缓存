@@ -1,0 +1,136 @@
+/* 
+ * @author: Edison
+ * @date: 2022/6/30
+*/
+#include "public.h"
+
+using namespace std;
+
+struct Node {
+    pair<int, int> data;
+    Node *pre;
+    Node *next;
+
+    Node(int key, int val) : data(make_pair(key, val)), pre(nullptr), next(nullptr)
+    {}
+};
+
+class LRUCache {
+public:
+    LRUCache(int capacity) : capacity(capacity), front(new Node(-1, -1)), back(new Node(-1, -1))
+    {
+        front->next = back;
+        back->pre = front;
+    }
+
+    int get(int key)
+    {
+        if (table.find(key) != table.end()) {
+            auto p = table[key];
+            ListRemove(p);
+            ListInsert(p);
+            return p->data.second;
+        }
+        return -1;
+    }
+
+    void put(int key, int value)
+    {
+        if (table.find(key) != table.end()) { // 更新value，并且移动至表头
+            auto tmp = table[key];
+            tmp->data.second = value;
+            ListRemove(tmp);
+            ListInsert(tmp);
+            return;
+        }
+        if (table.size() == capacity) { // 删除最久未使用（表尾）的元素，释放内存
+            auto tmp = back->pre;
+            ListRemove(tmp);
+            table.erase(tmp->data.first);
+            delete tmp;
+        }
+        auto tmp = new Node(key, value);
+        ListInsert(tmp);
+        table.insert(make_pair(key, tmp));
+    }
+
+private:
+    void ListInsert(Node* p)
+    {
+        p->next = front->next;
+        p->pre = front;
+        front->next->pre = p;
+        front->next = p;
+    }
+
+    void ListRemove(Node* p)
+    {
+        p->next->pre = p->pre;
+        p->pre->next = p->next;
+    }
+
+private:
+    unordered_map<int, Node *> table;
+    int capacity;
+    Node *front;
+    Node *back;
+};
+
+// 测试框架
+// ------------------------------------------------------
+typedef struct {
+    int capacity;
+    vector<pair<string, vector<int>>> ops;
+    vector<int> target;
+} TestCaseItem;
+
+static vector<TestCaseItem> TestCaseSet = {
+        {
+                .capacity = 2,
+                .ops = {
+                        {"put", {1, 1}},
+                        {"put", {2, 2}},
+                        {"get", {1}},
+                        {"put", {3, 3}},
+                        {"get", {2}},
+                        {"put", {4, 4}},
+                        {"get", {1}},
+                        {"get", {3}},
+                        {"get", {4}},
+                },
+                .target = {0, 0, 0, 1, 0, -1, 0, -1, 3, 4}
+        }
+};
+
+void TestLruCache(void)
+{
+    int i = 0;
+    for (auto &testCase: TestCaseSet) {
+        vector<int> ret;
+        auto lru = LRUCache(testCase.capacity);
+        ret.emplace_back(0);
+        for (auto item: testCase.ops) {
+            auto opsValue = item.second;
+            cout << item.first << ": " << opsValue[0] << ", ";
+            if (item.first == "get") {
+                auto tmp = lru.get(opsValue[0]);
+                ret.emplace_back(tmp);
+            } else {
+                cout << opsValue[1];
+                lru.put(opsValue[0], opsValue[1]);
+                ret.emplace_back(0);
+            }
+            cout << endl;
+        }
+        for (auto item: ret) {
+            cout << item << ", ";
+        }
+        cout << endl;
+        if (testCase.target == ret) {
+            printf("[OK] %d.\n", i);
+        } else {
+            printf("[FAILED] %d.\n", i);
+        }
+        i++;
+    }
+}
