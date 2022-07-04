@@ -1,0 +1,56 @@
+
+/* 字典树、前缀树（多叉树）
+ * */
+constexpr size_t NUMS_ALPHA = 26;
+
+class Trie {
+public:
+    Trie() : isEnd(false), children({nullptr}) {}
+
+    void insert(string word)
+    {
+        Trie* cur = this; // this指向树的根节点
+        for (auto alpha : word) {
+            if (cur->children[ToInt(alpha)] == nullptr) {
+                cur->children[ToInt(alpha)] = new Trie();
+            }
+            cur = cur->children[ToInt(alpha)];
+        }
+        cur->isEnd = true;
+    }
+
+    bool search(string word)
+    {
+        Trie* ret = GetPrefix(word);
+
+        return ret != nullptr && ret->isEnd;
+    }
+
+    bool startsWith(string prefix)
+    {
+        Trie* ret = GetPrefix(prefix);
+        return ret != nullptr;
+    }
+
+private:
+    size_t ToInt(char alpha)
+    {
+        return alpha - 'a';
+    }
+
+    Trie* GetPrefix(string& prefix)
+    {
+        Trie* cur = this;
+        for (auto alpha : prefix) {
+            cur = cur->children[ToInt(alpha)];
+            if (cur == nullptr) {
+                return nullptr;
+            }
+        }
+        return cur;
+    }
+
+private:
+    bool isEnd;
+    array<Trie *, NUMS_ALPHA> children;
+};
