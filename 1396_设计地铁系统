@@ -1,0 +1,115 @@
+/* 
+ * @author: Edison
+ * @date: 2022/7/4
+*/
+#include "public.h"
+
+#include <string>
+
+using namespace std;
+
+struct BehaviorDesp {
+    string station;
+    int tm;
+
+    BehaviorDesp(string sta, int tm) : station(sta), tm(tm)
+    {}
+};
+
+struct UserItem {
+    BehaviorDesp start;
+    BehaviorDesp end;
+
+    UserItem(BehaviorDesp start, BehaviorDesp end) : start(start), end(end)
+    {}
+
+    UserItem(string srcSta, int srcTm) :
+            start(BehaviorDesp(srcSta, srcTm)),
+            end(BehaviorDesp("", -1))
+    {}
+
+    UserItem(string& srcSta, int srcTm, string& dstSta, int dstTm) :
+            start(BehaviorDesp(srcSta, srcTm)),
+            end(BehaviorDesp(dstSta, dstTm))
+    {}
+};
+
+struct TargetDesp {
+    pair<string, string> stationInfo;
+    int sum;
+    int count;
+
+    TargetDesp(const BehaviorDesp& src, const BehaviorDesp& dst) :
+            stationInfo(make_pair(src.station, dst.station)), sum(dst.tm - src.tm), count(1)
+    {}
+};
+
+class UndergroundSystem {
+public:
+    UndergroundSystem() : targetContext({})
+    {
+
+    }
+
+    void checkIn(int id, string stationName, int t)
+    {
+        auto user = new UserItem(stationName, t);
+        userContext[id] = user;
+    }
+
+    void checkOut(int id, string stationName, int t)
+    {
+        auto user = userContext[id];
+        user->end.station = stationName;
+        user->end.tm = t;
+        auto target = FindTarget(user->start.station, stationName);
+        if (target == nullptr) {
+            InitTarget(user->start, user->end);
+        } else {
+            Update(user->start.station, stationName, t - user->start.tm);
+        }
+    }
+
+    double getAverageTime(string startStation, string endStation)
+    {
+        auto target = FindTarget(startStation, endStation);
+        if (target == nullptr) {
+            return 0;
+        }
+        return target->sum / static_cast<double>(target->count);
+    }
+
+private:
+    void InitTarget(const BehaviorDesp &src, const BehaviorDesp &dst)
+    {
+        auto target = new TargetDesp(src, dst);
+        targetContext.emplace_back(target);
+    }
+
+    void Update(const string &src, const string &dst, int sum)
+    {
+        auto target = FindTarget(src, dst);
+        if (target == nullptr) {
+            return;
+        }
+        target->sum += sum;
+        target->count++;
+    }
+
+    TargetDesp* FindTarget(const string &src, const string &dst)
+    {
+        if (targetContext.empty()) {
+            return nullptr;
+        }
+        for (auto& target : targetContext) {
+            if (target->stationInfo.first == src && target->stationInfo.second == dst) {
+                return target;
+            }
+        }
+        return nullptr;
+    }
+
+private:
+    unordered_map<int, UserItem *> userContext;
+    vector<TargetDesp *> targetContext;
+};
