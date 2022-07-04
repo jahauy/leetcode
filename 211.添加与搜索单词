@@ -1,0 +1,78 @@
+constexpr size_t NUMS_ALPHA = 26;
+
+
+class Trie {
+public:
+    Trie() : isEnd(false), children({nullptr})
+    {
+    }
+
+    void insert(string word)
+    {
+        Trie *cur = this; // this指向树的根节点
+        for (auto alpha : word) {
+            if (cur->children[ToInt(alpha)] == nullptr) {
+                cur->children[ToInt(alpha)] = new Trie();
+            }
+            cur = cur->children[ToInt(alpha)];
+        }
+        cur->isEnd = true;
+    }
+
+protected:
+    size_t ToInt(char alpha)
+    {
+        return alpha - 'a';
+    }
+
+public:
+    bool isEnd;
+    array<Trie *, NUMS_ALPHA> children;
+};
+
+class WordDictionary : public Trie {
+public:
+    WordDictionary()
+    {
+
+    }
+
+    void addWord(string word)
+    {
+        this->insert(word);
+    }
+
+    bool search(string word)
+    {
+        return Dfs(word, 0, this);
+    }
+
+private:
+    bool Dfs(const string& target, size_t offset, Trie* p)
+    {
+        if (offset == target.size()) { // 达到长度，判断最后一个字母是否为结束位置
+            return p->isEnd;
+        }
+
+        auto ch = target[offset];
+        if (IsAlpha(ch)) { // 如果是字母，则判断孩子情况：不为空、且下一级也不为空
+            auto next = p->children[ToInt(ch)];
+            if (next != nullptr && Dfs(target, offset + 1, next)) {
+                return true;
+            }
+        } else {
+            for (size_t i = 0; i < NUMS_ALPHA; ++i) { // 如果为“.”，则判断每一个孩子：递归
+                auto next = p->children[i];
+                if (next != nullptr && Dfs(target, offset + 1, next)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    bool IsAlpha(char ch)
+    {
+        return ch >= 'a' && ch <= 'z';
+    }
+};
