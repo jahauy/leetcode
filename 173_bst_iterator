@@ -1,0 +1,96 @@
+class BSTIterator {
+public:
+    BSTIterator(TreeNode *root) : arrInOrder({}), offset(0)
+    {
+        DfsInOrder(root);
+    }
+
+    int next()
+    {
+        int ret = arrInOrder[offset++];
+        return ret;
+    }
+
+    bool hasNext()
+    {
+        return offset < arrInOrder.size();
+    }
+
+private:
+    void DfsInOrder(TreeNode* node)
+    {
+        if (node == nullptr) {
+            return;
+        }
+        DfsInOrder(node->left);
+        arrInOrder.emplace_back(node->val);
+        DfsInOrder(node->right);
+    }
+
+private:
+    vector<int> arrInOrder;
+    size_t offset;
+};
+
+// namespace LeetCode {
+//     struct TreeNode {
+//         int val;
+//         TreeNode *left;
+//         TreeNode *right;
+
+//         TreeNode() : val(0), left(nullptr), right(nullptr) {}
+//         TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+//         TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+//     };
+// }
+
+// class BinTree {
+// public:
+//     TreeNode* CreateFromLevelVector(const vector<int>& seq, size_t offset = 0);
+
+//     void Dfs(TreeNode* root);
+
+// };
+
+// // 外部接口
+// void CreateTree(TreeNode* root, const vector<int>& seq)
+// {
+//     BinTree btree;
+//     root = btree.CreateFromLevelVector(seq, 0);
+//     btree.Dfs(root);
+// }
+
+// TreeNode* BinTree::CreateFromLevelVector(const vector<int>& seq, size_t offset)
+// {
+//     if (seq[offset] == null) {
+//         return nullptr;
+//     }
+
+//     TreeNode* cur = new TreeNode(seq[offset]);
+
+//     size_t left = 2 * offset + 1;
+//     size_t right = 2 * offset + 2;
+
+//     if (left > seq.size() - 1) {
+//         cur->left = nullptr;
+//     } else {
+//         cur->left = CreateFromLevelVector(seq, left);
+//     }
+
+//     if (right > seq.size() - 1) {
+//         cur->right = nullptr;
+//     } else {
+//         cur->right = CreateFromLevelVector(seq, right);
+//     }
+//     return cur;
+// }
+
+// void BinTree::Dfs(TreeNode* root)
+// {
+//     if (root == nullptr) {
+//         return;
+//     }
+//     cout << root->val << ", ";
+//     Dfs(root->left);
+//     Dfs(root->right);
+// }
