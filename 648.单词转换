@@ -1,0 +1,115 @@
+constexpr size_t NUMS_ALPHA = 26;
+
+vector<string> SplitBlank(const string &oriStr)
+{
+    vector<string> ret;
+    stringstream ss(oriStr);
+    string tmp;
+    while (ss >> tmp) {
+        ret.emplace_back(tmp);
+    }
+    return ret;
+}
+
+vector<string> Split(const string &oriStr, char delimiter = ' ')
+{
+    if (delimiter == ' ') {
+        return SplitBlank(oriStr);
+    }
+    return {};
+}
+
+class Trie {
+public:
+    Trie() : isEnd(false), children({nullptr})
+    {
+    }
+
+    void insert(string word)
+    {
+        Trie *cur = this; // this指向树的根节点
+        for (auto alpha : word) {
+            if (cur->children[ToInt(alpha)] == nullptr) {
+                cur->children[ToInt(alpha)] = new Trie();
+            }
+            cur = cur->children[ToInt(alpha)];
+        }
+        cur->isEnd = true;
+    }
+
+    string search(string word)
+    {
+        return GetPrefix(word);
+    }
+
+private:
+    size_t ToInt(char alpha)
+    {
+        return alpha - 'a';
+    }
+
+    string GetPrefix(string &prefix)
+    {
+        Trie *cur = this;
+        string ret = "";
+        for (auto alpha : prefix) {
+            cur = cur->children[ToInt(alpha)];
+            if (cur == nullptr) {
+                return "";
+            }
+            ret += alpha;
+            if (cur->isEnd) {
+                return ret;
+            }
+        }
+        return "";
+    }
+
+private:
+    bool isEnd;
+    array<Trie *, NUMS_ALPHA> children;
+};
+
+
+class Solution : public Trie {
+public:
+    string replaceWords(vector<string> &dictionary, string sentence)
+    {
+        InitDict(dictionary);
+        InitTrie(dictionary);
+
+        auto split = Split(sentence);
+        string ret = "";
+        for (auto& word: split) {
+            auto prefix = search(word);
+            if (prefix == "") {
+                ret += word;
+            } else {
+                ret += prefix;
+            }
+            ret += ' ';
+        }
+        ret.pop_back();
+        return ret;
+    }
+
+private:
+    void InitTrie(const vector<string> &dictionary)
+    {
+        for (auto &word : dictionary) {
+            insert(word);
+        }
+    }
+
+    void InitDict(vector<string> &dictionary)
+    {
+        // 长度从小打到排序
+        sort(dictionary.begin(), dictionary.end(), [](const string &a, const string &b) {
+            if (a.size() == b.size()) {
+                return a < b;
+            }
+            return a.size() < b.size();
+        });
+    }
+    
+};
