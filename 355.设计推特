@@ -1,0 +1,210 @@
+#ifdef CJHDEBUG
+
+#include "public.h"
+
+#include <unordered_set>
+#include <set>
+#include <unordered_map>
+
+#endif
+
+using namespace std;
+
+struct TweetItem {
+    int userId;
+    int twitterId;
+    int timestamp;
+
+    TweetItem(int userId, int twitterId, int timestamp) : userId(userId), twitterId(twitterId), timestamp(timestamp)
+    {}
+
+    bool operator < (const TweetItem& other) const
+    {
+        return timestamp > other.timestamp;
+    }
+};
+
+typedef struct {
+    set<TweetItem> tweets;
+    unordered_set<int> followeeList;
+} UserItem;
+
+class Twitter {
+public:
+    Twitter() : curTime(0), maxFeedNums(10)
+    {}
+
+    void postTweet(int userId, int tweetId)
+    {
+        auto user = GetUserItem(userId);
+        Init(userId, user);
+        TweetItem tweet(userId, tweetId, curTime++);
+        user->tweets.insert(tweet);
+    }
+
+    vector<int> getNewsFeed(int userId)
+    {
+        auto user = GetUserItem(userId);
+        if (user == nullptr) {
+            return {};
+        }
+
+        set<TweetItem> tweets;
+        MergeTweets(user, tweets);
+
+        vector<int> ret;
+        size_t i = 0;
+        for (auto& item : tweets) {
+            if (i == maxFeedNums) {
+                break;
+            }
+            ret.emplace_back(item.twitterId);
+            i++;
+        }
+        return ret;
+    }
+
+    void follow(int followerId, int followeeId)
+    {
+        auto followee = GetUserItem(followeeId);
+        Init(followeeId, followee);
+        auto follower = GetUserItem(followerId);
+        Init(followerId, follower);
+
+        follower->followeeList.insert(followeeId);
+    }
+
+    void unfollow(int followerId, int followeeId)
+    {
+        auto follower = GetUserItem(followerId);
+        auto followee = GetUserItem(followeeId);
+
+        if (follower == nullptr || followee == nullptr) {
+            return;
+        }
+        follower->followeeList.erase(followeeId);
+    }
+
+private:
+    UserItem* GetUserItem(int userId)
+    {
+        if (userInfos.find(userId) == userInfos.end()) {
+            return nullptr;
+        }
+        return userInfos[userId];
+    }
+
+    void Init(int userId, UserItem*& user)
+    {
+        if (user != nullptr) {
+            return;
+        }
+        user = new UserItem();
+        userInfos.insert(make_pair(userId, user));
+    }
+
+    void MergeTweets(UserItem* user, set<TweetItem>& tweets)
+    {
+        MergeTweetsImple(user->tweets, tweets);
+        for (auto item : user->followeeList) {
+            auto followee = GetUserItem(item);
+            MergeTweetsImple(followee->tweets, tweets);
+        }
+    }
+
+    void MergeTweetsImple(const set<TweetItem>& srcTweets, set<TweetItem>& tweets)
+    {
+        tweets.insert(srcTweets.begin(), srcTweets.end());
+    }
+
+private:
+    unordered_map<int, UserItem*> userInfos;
+    int curTime;
+    const size_t maxFeedNums;
+};
+
+
+#ifdef CJHDEBUG
+// --------------------------------------------------------------------------------------------------------
+typedef struct {
+    string ops;
+    vector<int> val;
+} TestOps;
+
+typedef struct {
+    string tag;
+    vector<TestOps> ops;
+    vector<vector<int>> target;
+} TestItem;
+
+vector<TestItem> g_testSet = {
+    {
+        .tag = "case1",
+        .ops = {
+            {"postTweet",   {1, 5}},
+            {"getNewsFeed", {1}},
+            {"follow",      {1, 2}},
+            {"postTweet",   {2, 6}},
+            {"getNewsFeed", {1}},
+            {"unfollow",    {1, 2}},
+            {"getNewsFeed", {1}},
+                },
+        .target = {{null},
+            {null},
+            {5},
+            {null},
+            {null},
+            {6, 5},
+            {null},
+            {5}}
+    }
+
+};
+
+inline void Print(const vector<int>& v)
+{
+    for (auto item : v) {
+        cout << item << ", ";
+    }
+    cout << endl;
+}
+
+void TestTwitter()
+{
+    Twitter twitter;
+    for (auto& testCase : g_testSet) {
+        vector<vector<int>> ret;
+        ret.emplace_back(vector<int>({ null }));
+        for (auto& op : testCase.ops) {
+            if (op.ops == "postTweet") {
+                twitter.postTweet(op.val[0], op.val[1]);
+                ret.emplace_back(vector<int>({ null }));
+            } else if (op.ops == "getNewsFeed") {
+                auto opRet = twitter.getNewsFeed(op.val[0]);
+                Print(opRet);
+                ret.emplace_back(opRet);
+            } else if (op.ops == "follow") {
+                twitter.follow(op.val[0], op.val[1]);
+                ret.emplace_back(vector<int>({ null }));
+            } else if (op.ops == "unfollow") {
+                twitter.unfollow(op.val[0], op.val[1]);
+                ret.emplace_back(vector<int>({ null }));
+            } else {
+                return;
+            }
+        }
+        if (ret != testCase.target) {
+            cout << "ERROR [" << testCase.tag << "] \n";
+        }
+    }
+}
+
+#endif
+/**
+ * Your Twitter object will be instantiated and called as such:
+ * Twitter* obj = new Twitter();
+ * obj->postTweet(userId,tweetId);
+ * vector<int> param_2 = obj->getNewsFeed(userId);
+ * obj->follow(followerId,followeeId);
+ * obj->unfollow(followerId,followeeId);
+ */
