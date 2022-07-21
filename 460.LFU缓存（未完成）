@@ -1,0 +1,75 @@
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+class LFUCache {
+    using DataT = tuple<int, int, int>; // key, value, freq
+    using LinkedList = list<DataT>;
+public:
+    LFUCache(int capacity) : capacity(capacity), minFreq(0)
+    {}
+
+    int get(int key)
+    {
+        if (capacity == 0) return -1;
+        if (indexTable.count(key) == 0) return -1;
+
+        auto item = indexTable[key];
+        if (indexTable.size() == 1) return std::get<1>(*item);
+        auto& freq = std::get<2>(*item);
+        auto value = LinkList_Remove(item, freqTable[freq]);
+        freq++;
+        if (freqTable[minFreq].empty()) minFreq++;
+        LinkList_Push(key, value, freq, freqTable[freq]);
+        return value;
+    }
+
+    void put(int key, int value)
+    {
+        if (capacity == 0) return;
+        if (get(key) != -1) {
+            std::get<1>(*indexTable[key]) = value;
+        } else {
+            if (Full()) LinkList_Pop(freqTable[minFreq]);
+            minFreq = 1;
+            LinkList_Push(key, value, minFreq, freqTable[minFreq]);
+        }
+    }
+
+private:
+    void LinkList_Push(int key, int value, int freq, LinkedList& dbList)
+    {
+        dbList.emplace_front(key, value, freq);
+        indexTable[key] = dbList.begin();
+    }
+
+    int LinkList_Remove(LinkedList::iterator& iter, LinkedList& dbList)
+    {
+        int value = std::get<1>((*iter));
+        dbList.erase(iter);
+        return value;
+    }
+
+    void LinkList_Pop(LinkedList& dbList)
+    {
+        indexTable.erase(std::get<0>(dbList.back()));
+        dbList.pop_back();
+    }
+
+    bool Full() const
+    {
+        return indexTable.size() == capacity;
+    }
+
+    bool LinkList_Empty(int freq)
+    {
+        return freqTable.count(freq) == 0;
+    }
+
+private:
+    const int capacity;
+    unordered_map<int, LinkedList> freqTable; // 不同频率放在一起，(freq, List)，且按照时间排序
+    unordered_map<int, LinkedList::iterator> indexTable; // 索引 (key, Node)
+    int minFreq;
+};
